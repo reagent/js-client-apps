@@ -1,0 +1,29 @@
+#!/bin/bash
+
+framework_name=$1
+full_public_dir=""
+port="9292"
+
+if [ -z "$framework_name" ]; then
+  echo "Usage: $0 <framework-name> [port]"
+  exit 1
+fi
+
+if [ -n "$2" ]; then
+  port=$2
+fi
+
+exec_dir="$( cd "$( dirname "$0" )" && pwd )"
+framework_dir="${exec_dir}/../frameworks/${framework_name}"
+
+if [ -d $framework_dir ]
+then
+  full_public_dir="$( cd "$framework_dir" && pwd )"
+  cd "${exec_dir}/../server" && JS_APP_PATH="$full_public_dir" rackup -p $port
+else
+  echo "Error: directory 'frameworks/${framework_name}' not found"
+  exit 1
+fi
+
+
+
