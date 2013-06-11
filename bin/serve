@@ -18,8 +18,10 @@ framework_dir="${exec_dir}/../frameworks/${framework_name}"
 
 if [ -d $framework_dir ]
 then
-  full_public_dir="$( cd "$framework_dir" && pwd )"
-  cd "${exec_dir}/../server" && JS_APP_PATH="$full_public_dir" rackup -p $port
+  full_public_dir="$( cd "${framework_dir}" && pwd )"
+  
+  echo "Starting server with '${full_public_dir}' as the root path" >&2
+  cd "${exec_dir}/../server" && JS_APP_PATH="${full_public_dir}" rackup -p $port
 else
   echo "Error: directory 'frameworks/${framework_name}' not found"
   exit 1
