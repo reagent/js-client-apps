@@ -1,0 +1,12 @@
+#!/bin/bash
+
+exec_dir="$( cd "$( dirname "$0" )" && pwd )"
+
+server_dir="$( cd "${exec_dir}/../server" && pwd )"
+empty_dirs=`find "${server_dir}" -depth 0 -type d -empty`
+
+if [ -n "${empty_dirs}" ]; then
+  git submodule init
+fi
+
+git submodule update && cd $server_dir && bundle install
