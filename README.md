@@ -2,7 +2,7 @@
 
 This is just a simple structure to make it easy to use various client-side frameworks against an [existing API](https://github.com/reagent/js-frameworks).
 
-# Setup
+## Setup
 
 Fork this repository to your own account, and then clone it.  Once you have a local copy, run the local helper script to make sure everything is up-to-date:
 
