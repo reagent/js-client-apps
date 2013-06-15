@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Hacker News</title>
+  </head>
+  <body>
+    <div id="app">
+      <header>
+        <a id="create-user" href="#">Create Account</a></div>
+        <div id="form-display"></div>
+      </header>
+      <script type="text/template" id="new-user">
+        <form>
+          <ul class="errors"></ul>
+          <ul>
+            <li>
+              <label for="user-email">Email</label>
+              <input name="email" id="user-email" />
+            </li>
+            <li>
+            <label for="user-username">Username</label>
+              <input name="username" id="user-username" />
+            </li>
+            <li>
+              <label for="user-password">Password</label>
+              <input name="password" id="user-password" type="password" />
+            </li>
+            <li>
+              <label for="user-password_confirmation">Confirm Password</label>
+              <input name="password_confirmation" id="user-password_confirmation" type="password" />
+            </li>
+            <li>
+              <button type="reset">Cancel</button>
+              <button type="submit">Create</button>
+            </li>
+          </ul>
+        </form>
+      </script>
+    </div>
+
+    <script src="/js/vendor/jquery-1.10.1.min.js"></script>
+    <script src="/js/vendor/underscore-min.js"></script>
+    <script src="/js/vendor/backbone-min.js"></script>
+    <script src="/js/app.js"></script>
+    <script>
+      $(function() {
+        new app.AppView();
+      });
+    </script>
+  </body>
+</html>
