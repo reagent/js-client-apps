@@ -16,11 +16,21 @@ app.AppView = Backbone.View.extend({
     'click #create-user': 'showNewUserForm'
   },
 
+  initialize: function() {
+    this.$formDisplay = $('#form-display');
+  },
+
   showNewUserForm: function(event) {
     event.preventDefault();
 
     var newUserForm = new app.newUserForm();
-    $('#form-display').html(newUserForm.render().el);
+    this.listenTo(newUserForm, 'close', this.closeNewUserForm);
+
+    this.$formDisplay.html(newUserForm.render().el);
+  },
+
+  closeNewUserForm: function() {
+    this.$formDisplay.html('');
   }
 
 });
@@ -60,9 +70,7 @@ app.newUserForm = Backbone.View.extend({
 
   closeForm: function() {
     this.stopListening();
-
-    // This seems bad, I'm controlling a DOM element outside this view's scope
-    $('#form-display').html('');
+    this.trigger('close');
   },
 
   render: function() {
