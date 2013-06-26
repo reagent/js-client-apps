@@ -10,18 +10,21 @@ app.User = Backbone.Model.extend({
 });
 
 app.AppView = Backbone.View.extend({
-  el: '#app',
+  el: 'body',
 
   events: {
-    'click #create-user': 'showNewUserForm'
+    'click #create-user': 'showNewUserForm',
+    'click #create-user.opened': 'closeNewUserForm'
   },
 
   initialize: function() {
-    this.$formDisplay = $('#form-display');
+    this.$userFormToggle = $('#create-user');
+    this.$formDisplay    = $('#form-display');
   },
 
   showNewUserForm: function(event) {
     event.preventDefault();
+    this.$userFormToggle.addClass('opened');
 
     var newUserForm = new app.newUserForm();
     this.listenTo(newUserForm, 'close', this.closeNewUserForm);
@@ -31,6 +34,7 @@ app.AppView = Backbone.View.extend({
 
   closeNewUserForm: function() {
     this.$formDisplay.html('');
+    this.$userFormToggle.removeClass('opened');
   }
 
 });
