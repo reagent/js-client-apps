@@ -18,6 +18,7 @@
           <div class="nav-collapse collapse">
             <ul class="nav">
               <li><a href="#" id="create-user">Create Account</a></li>
+              <li><a href="#" id="log-in">Log In</a></li>
             </ul>
           </div><!--/.nav-collapse -->
         </div>
@@ -27,45 +28,72 @@
     <div class="container" id="main">
        <div id="form-display"></div>
     </div>
-     <script type="text/template" id="new-user">
-       <form class="form-horizontal">
-         <ul class="errors"></ul>
-         <div class="control-group">
-           <label class="control-label" for="user-email">Email</label>
-           <div class="controls">
-             <input name="email" id="user-email" type="text" />
-           </div>
-         </div>
 
-         <div class="control-group">
-           <label class="control-label" for="user-username">Username</label>
-           <div class="controls">
-             <input name="username" id="user-username" type="text" />
-           </div>
-         </div>
+    <script type="text/template" id="new-user">
+      <form class="form-horizontal">
+        <ul class="errors"></ul>
+        <div class="control-group">
+          <label class="control-label" for="user-email">Email</label>
+          <div class="controls">
+            <input name="email" id="user-email" type="text" />
+          </div>
+        </div>
 
-         <div class="control-group">
-           <label class="control-label" for="user-password">Password</label>
-           <div class="controls">
-             <input name="password" id="user-password" type="password" />
-           </div>
-         </div>
+        <div class="control-group">
+          <label class="control-label" for="user-username">Username</label>
+          <div class="controls">
+            <input name="username" id="user-username" type="text" />
+          </div>
+        </div>
 
-         <div class="control-group">
-           <label class="control-label" for="user-password_confirmation">Confirm Password</label>
-           <div class="controls">
-             <input name="password_confirmation" id="user-password_confirmation" type="password" />
-           </div>
-         </div>
+        <div class="control-group">
+          <label class="control-label" for="user-password">Password</label>
+          <div class="controls">
+            <input name="password" id="user-password" type="password" />
+          </div>
+        </div>
 
-         <div class="control-group">
-           <div class="controls">
-             <button type="reset" class="btn">Cancel</button>
-             <button type="submit" class="btn btn-primary">Create</button>
-           </div>
-         </div>
-       </form>
-     </script>
+        <div class="control-group">
+          <label class="control-label" for="user-password_confirmation">Confirm Password</label>
+          <div class="controls">
+            <input name="password_confirmation" id="user-password_confirmation" type="password" />
+          </div>
+        </div>
+
+        <div class="control-group">
+          <div class="controls">
+            <button type="reset" class="btn">Cancel</button>
+            <button type="submit" class="btn btn-primary">Create</button>
+          </div>
+        </div>
+      </form>
+    </script>
+
+    <script type="text/template" id="login-form">
+      <form class="form-horizontal">
+        <ul class="errors"></ul>
+        <div class="control-group">
+          <label class="control-label" for="login-email">Email</label>
+          <div class="controls">
+            <input name="email" id="login-email" type="text" />
+          </div>
+        </div>
+
+        <div class="control-group">
+          <label class="control-label" for="login-password">Password</label>
+          <div class="controls">
+            <input name="password" id="login-password" type="password" />
+          </div>
+        </div>
+
+        <div class="control-group">
+          <div class="controls">
+            <button type="reset" class="btn">Cancel</button>
+            <button type="submit" class="btn btn-primary">Log In</button>
+          </div>
+        </div>
+      </form>
+    </script>
 
     <script src="/js/vendor/jquery-1.10.1.min.js"></script>
     <script src="/js/vendor/underscore-min.js"></script>
