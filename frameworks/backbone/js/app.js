@@ -1,5 +1,20 @@
 var app = app || {};
 
+// Overall view structure
+//
+// ApplicationView
+// |
+// + -> NavigationView
+// |   |
+// |   +-> NewUserForm
+// |   |
+// |   `-> LoginForm
+// |
+// `-> MainView
+//     |
+//     `-> AlertView
+
+// Models
 app.User = Backbone.Model.extend({
   url: '/users',
 
@@ -13,106 +28,87 @@ app.Session = Backbone.Model.extend({
   url: '/session'
 })
 
-app.AppView = Backbone.View.extend({
+// Views
+app.ApplicationView = Backbone.View.extend({
   el: 'body',
 
-  events: {
-    'click #create-user': 'showNewUserForm',
-    'click #create-user.opened': 'closeNewUserForm',
-    'click #log-in': 'showLoginForm',
-    'click #log-in.opened': 'closeLoginForm'
-  },
-
   initialize: function() {
-    this.$userFormToggle  = $('#create-user');
-    this.$loginFormToggle = $('#log-in');
-    this.$formDisplay     = $('#form-display');
-  },
+    var navigationView = new app.NavigationView({
+      el: this.$('#navigation'),
+      modalTarget: $(document.body)
+    });
 
-  showNewUserForm: function(event) {
-    event.preventDefault();
-    this.$userFormToggle.addClass('opened');
+    new app.MainView({el: this.$('#main')});
 
-    var newUserForm = new app.newUserForm();
-    this.listenTo(newUserForm, 'close', this.closeNewUserForm);
+    if (localStorage['userToken']) {
+      navigationView.setLoginState();
+    }
 
-    this.$formDisplay.html(newUserForm.render().el);
-  },
-
-  showLoginForm: function(event) {
-    event.preventDefault();
-    this.$loginFormToggle.addClass('opened');
-
-    var loginForm = new app.LoginForm();
-    this.listenTo(loginForm, 'close', this.closeLoginForm);
-    this.$formDisplay.html(loginForm.render().el);
-  },
-
-  closeNewUserForm: function() {
-    this.$formDisplay.html('');
-    this.$userFormToggle.removeClass('opened');
-  },
-
-  closeLoginForm: function() {
-    this.$formDisplay.html('');
-    this.$loginFormToggle.removeClass('opened');
+    this.listenTo(Backbone, 'login', navigationView.setLoginState);
   }
 
 });
 
-app.LoginForm = Backbone.View.extend({
-  template: _.template($('#login-form').html()),
-
+app.NavigationView = Backbone.View.extend({
   events: {
-    'submit form': 'create',
-    'click button[type=reset]': 'close'
+    'click #create-user': 'showUserForm',
+    'click #log-in': 'showLoginForm'
   },
 
-  create: function(event) {
-    event.preventDefault();
-
-    var session = new app.Session();
-    var formValues = this.$('form').serializeArray();
-
-    this.listenTo(session, 'sync', this.persistLogin);
-    this.listenTo(session, 'error', this.displayErrors);
-
-    _(formValues).each(function(pair) { session.set(pair.name, pair.value); });
-
-    session.save();
+  showUserForm: function(e) {
+    e.preventDefault();
+    new app.NewUserForm().show(this.options.modalTarget);
   },
 
-  persistLogin: function(model, response) {
-    localStorage['userToken'] = response.token;
-    this.close();
+  showLoginForm: function(e) {
+    e.preventDefault();
+    new app.LoginForm().show(this.options.modalTarget);
   },
 
-  displayErrors: function(model, xhr) {
-    _(xhr.responseJSON.errors).each(function(error) {
-      this.$('.errors').append('<li>' + error + '</li>');
-    });
+  setLoginState: function() {
+    $('ul li.public').hide();
+    $('ul li.private').show();
+  }
+});
+
+app.AlertView = Backbone.View.extend({
+  template: _.template($('#alert-template').html()),
+
+  render: function() {
+    this.$el.html(this.template(this.options));
+    return this;
   },
 
   close: function() {
-    this.stopListening();
-    this.trigger('close');
+    this.remove();
   },
 
-  render: function() {
-    this.$el.html(this.template());
-    return this;
+  show: function(elem) {
+    // TODO: set timeout to automatically dismiss alert
+    elem.prepend(this.render().el);
+    $('#alert').bind('closed', _.bind(this.close, this));
+  }
+})
+
+app.MainView = Backbone.View.extend({
+  initialize: function() {
+    this.listenTo(Backbone, 'alert', this.showAlert);
+  },
+
+  showAlert: function(message) {
+    var alertView = new app.AlertView({message: message});
+    alertView.show(this.$el);
   }
 });
 
-app.newUserForm = Backbone.View.extend({
-  template: _.template($('#new-user').html()),
+app.NewUserForm = Backbone.View.extend({
+  template: _.template($('#new-user-form-template').html()),
 
   events: {
-    'submit form': 'createUser',
-    'click button[type=reset]': 'closeForm'
+    'submit form': 'create'
   },
 
-  createUser: function(event) {
+  create: function(e) {
     event.preventDefault();
 
     var user = new app.User();
@@ -133,18 +129,79 @@ app.newUserForm = Backbone.View.extend({
   },
 
   displaySuccess: function(model, resp) {
-    alert("Created account for '" + model.get('username') + "'")
-    this.closeForm();
-  },
-
-  closeForm: function() {
-    this.stopListening();
-    this.trigger('close');
+    $('#new-user-form').modal('hide');
+    Backbone.trigger('alert', "Created account for '" + model.get('username') + "'");
   },
 
   render: function() {
     this.$el.html(this.template());
     return this;
+  },
+
+  close: function() {
+    this.stopListening();
+    this.trigger('close');
+    this.remove();
+  },
+
+  show: function(elem) {
+    elem.append(this.render().el);
+
+    // TODO: Chain these on multiple lines?
+    $('#new-user-form').on('hidden', _.bind(this.close, this)).modal();
   }
 
+});
+
+app.LoginForm = Backbone.View.extend({
+  template: _.template($('#login-form-template').html()),
+
+  events: {
+    'submit form': 'login'
+  },
+
+  login: function(event) {
+    event.preventDefault();
+
+    var session = new app.Session();
+    var formValues = this.$('form').serializeArray();
+
+    this.listenTo(session, 'sync', this.persistLogin);
+    this.listenTo(session, 'error', this.displayErrors);
+
+    _(formValues).each(function(pair) { session.set(pair.name, pair.value); });
+
+    session.save();
+  },
+
+  persistLogin: function(model, response) {
+    localStorage['userToken'] = response.token;
+    $('#login-form').modal('hide');
+
+    Backbone.trigger('alert', 'You have successfully logged-in')
+    Backbone.trigger('login');
+  },
+
+  displayErrors: function(model, xhr) {
+    _(xhr.responseJSON.errors).each(function(error) {
+      this.$('.errors').append('<li>' + error + '</li>');
+    });
+  },
+
+  close: function() {
+    this.stopListening();
+    this.trigger('close');
+    this.remove();
+  },
+
+  render: function() {
+    this.$el.html(this.template());
+    return this;
+  },
+
+  show: function(elem) {
+    elem.append(this.render().el);
+
+    $('#login-form').on('hidden', _.bind(this.close, this)).modal();
+  }
 });
