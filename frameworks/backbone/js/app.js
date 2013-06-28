@@ -26,7 +26,23 @@ app.User = Backbone.Model.extend({
 
 app.Session = Backbone.Model.extend({
   url: '/session'
-})
+});
+
+app.Account = Backbone.Model.extend({
+  url: '/account',
+
+  token: null,
+
+  fetch: function(options) {
+    options         = options || {};
+    options.headers = options.headers || {}
+
+    options.headers['Content-Type'] = 'application/json';
+    options.headers['X-User-Token'] = this.token;
+
+    return Backbone.Model.prototype.fetch.apply(this, [options]);
+  }
+});
 
 // Views
 app.ApplicationView = Backbone.View.extend({
@@ -52,7 +68,8 @@ app.ApplicationView = Backbone.View.extend({
 app.NavigationView = Backbone.View.extend({
   events: {
     'click #create-user': 'showUserForm',
-    'click #log-in': 'showLoginForm'
+    'click #log-in': 'showLoginForm',
+    'click #current-account-show': 'showCurrentAccount'
   },
 
   showUserForm: function(e) {
@@ -65,9 +82,42 @@ app.NavigationView = Backbone.View.extend({
     new app.LoginForm().show(this.options.modalTarget);
   },
 
+  showCurrentAccount: function(e) {
+    e.preventDefault();
+    new app.CurrentAccountView().show(this.options.modalTarget);
+  },
+
   setLoginState: function() {
     $('ul li.public').hide();
     $('ul li.private').show();
+  }
+});
+
+app.CurrentAccountView = Backbone.View.extend({
+  template: _.template($('#current-account-show-template').html()),
+
+  initialize: function() {
+    this.account = new app.Account();
+    this.account.token = localStorage['userToken'];
+  },
+
+  close: function() {
+    this.stopListening();
+    this.remove();
+  },
+
+  render: function() {
+    this.$el.html(this.template(this.account.toJSON()));
+    return this;
+  },
+
+  displayDialog: function(elem) {
+    elem.prepend(this.render().el);
+    $('#current-account-show').on('hidden', _.bind(this.close, this)).modal();
+  },
+
+  show: function(elem) {
+    this.account.fetch({success: _.bind(this.displayDialog, this, elem)});
   }
 });
 
