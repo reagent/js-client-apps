@@ -1,5 +1,9 @@
 var app = app || {};
 
+// Key code lookup for keydown events
+app.keyCodes = {};
+app.keyCodes.Enter = 13;
+
 // Overall view structure
 //
 // ApplicationView
@@ -8,7 +12,11 @@ var app = app || {};
 // |   |
 // |   +-> NewUserForm
 // |   |
-// |   `-> LoginForm
+// |   +-> LoginForm
+// |   |
+// |   +-> CurrentAccountView
+// |      |
+// |      `-> InputView
 // |
 // `-> MainView
 //     |
@@ -32,6 +40,15 @@ app.Account = Backbone.Model.extend({
   url: '/account',
 
   token: null,
+
+  save: function(attributes, options) {
+    options = options || {};
+    options.headers = options.headers || {}
+
+    options.headers['X-User-Token'] = this.token;
+
+    return Backbone.Model.prototype.save.apply(this, [attributes, options])
+  },
 
   fetch: function(options) {
     options         = options || {};
@@ -93,12 +110,82 @@ app.NavigationView = Backbone.View.extend({
   }
 });
 
+app.InputField = Backbone.View.extend({
+  template: _.template('<input type="text" name="<%= name %>" value="<%= value %>" />'),
+
+  events: {
+    'keydown input': 'persistOnComplete'
+  },
+
+  initialize: function() {
+    this.listenTo(this.model, 'sync', this.close);
+  },
+
+  render: function(elem) {
+    this.$el.html(this.template(this.options));
+    return this;
+  },
+
+  persistOnComplete: function(e) {
+    if (e.keyCode === app.keyCodes.Enter) {
+      this.persist();
+    }
+  },
+
+  persist: function() {
+    var $elem     = this.$('input'),
+        attribute = $elem.attr('name'),
+        value     = $elem.val();
+
+    var updates = {};
+    updates[attribute] = value;
+
+    console.log(updates);
+
+    this.model.save(updates, {patch: true});
+  },
+
+  close: function() {
+    this.stopListening();
+    this.trigger('close', this.$('input').val());
+    this.remove();
+  }
+})
+
 app.CurrentAccountView = Backbone.View.extend({
   template: _.template($('#current-account-show-template').html()),
+
+  events: {
+    'dblclick td[data-attribute]': 'makeFieldEditable'
+  },
 
   initialize: function() {
     this.account = new app.Account();
     this.account.token = localStorage['userToken'];
+  },
+
+  makeFieldEditable: function(e) {
+    var $elem = $(e.currentTarget);
+
+    if ($elem.data('editing') !== '1') {
+      $elem.data('editing', '1');
+
+      var attributeName = $elem.data('attribute'),
+          value         = $elem.html();
+
+      var input = new app.InputField({
+        model: this.account,
+        name:  attributeName,
+        value: value
+      });
+
+      this.listenTo(input, 'close', function(newValue) {
+        $elem.html(newValue);
+        $elem.data('editing', '0');
+      });
+
+      $elem.html(input.render().el);
+    }
   },
 
   close: function() {
