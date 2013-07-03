@@ -23,20 +23,19 @@ app.keyCodes.Enter = 13;
 //     `-> AlertView
 
 // Models
-app.User = Backbone.Model.extend({
-  url: '/users',
-
-  defaults: {
-    email:    null,
-    username: null
-  }
+app.Model = Backbone.Model.extend({
+  errors: {}
 });
 
-app.Session = Backbone.Model.extend({
+app.User = app.Model.extend({
+  url: '/users',
+});
+
+app.Session = app.Model.extend({
   url: '/session'
 });
 
-app.Account = Backbone.Model.extend({
+app.Account = app.Model.extend({
   url: '/account',
 
   token: null,
@@ -142,7 +141,7 @@ app.InputField = Backbone.View.extend({
 
     console.log(updates);
 
-    this.model.save(updates, {patch: true});
+    this.model.save(updates, {attrs: updates});
   },
 
   close: function() {
@@ -198,9 +197,14 @@ app.CurrentAccountView = Backbone.View.extend({
     return this;
   },
 
+  modalSelector: '#current-account-show',
+
   displayDialog: function(elem) {
     elem.prepend(this.render().el);
-    $('#current-account-show').on('hidden', _.bind(this.close, this)).modal();
+    var other = $(this.modalSelector);
+
+    other.on('hidden', _.bind(this.close, this))
+    other.modal();
   },
 
   show: function(elem) {
@@ -238,38 +242,7 @@ app.MainView = Backbone.View.extend({
   }
 });
 
-app.NewUserForm = Backbone.View.extend({
-  template: _.template($('#new-user-form-template').html()),
-
-  events: {
-    'submit form': 'create'
-  },
-
-  create: function(e) {
-    event.preventDefault();
-
-    var user = new app.User();
-    var formValues = this.$('form').serializeArray();
-
-    this.listenTo(user, 'error', this.displayErrors);
-    this.listenTo(user, 'sync', this.displaySuccess);
-
-    _(formValues).each(function(pair) { user.set(pair.name, pair.value); });
-
-    user.save();
-  },
-
-  displayErrors: function(model, xhr) {
-    _(xhr.responseJSON.errors).each(function(error) {
-      this.$('.errors').append('<li>' + error + '</li>');
-    });
-  },
-
-  displaySuccess: function(model, resp) {
-    $('#new-user-form').modal('hide');
-    Backbone.trigger('alert', "Created account for '" + model.get('username') + "'");
-  },
-
+app.ModalView = Backbone.View.extend({
   render: function() {
     this.$el.html(this.template());
     return this;
@@ -283,62 +256,90 @@ app.NewUserForm = Backbone.View.extend({
 
   show: function(elem) {
     elem.append(this.render().el);
-
-    // TODO: Chain these on multiple lines?
-    $('#new-user-form').on('hidden', _.bind(this.close, this)).modal();
+    $(this.modalSelector).on('hidden', _.bind(this.close, this)).modal();
   }
+});
+
+app.CreateForm = app.ModalView.extend({
+  events: {
+    'submit form': 'create'
+  },
+
+  initialize: function() {
+    this.initializeModel();
+
+    this.listenTo(this.model, 'sync', this.handleSuccess);
+    this.listenTo(this.model, 'error', this.displayErrors);
+  },
+
+  create: function(event) {
+    this.clearErrors();
+    event.preventDefault();
+
+    _(this.$('form').serializeArray()).each(function(pair) {
+      this.model.set(pair.name, pair.value);
+    }, this);
+
+    this.model.save();
+  },
+
+  clearErrors: function() {
+    this.$('#errors-general').hide();
+    this.$('.control-group').removeClass('error');
+    this.$('.control-group .controls .help-inline').remove();
+  },
+
+  displayErrors: function(model, xhr) {
+    model.errors = xhr.responseJSON.errors.keyed;
+
+    _(model.errors).each(function(messages, key) {
+      this.showError(key, _(messages).join(', '));
+    }, this);
+  },
+
+  showError: function(attribute, message) {
+    if (attribute === 'general') {
+      this.$('#errors-general').html(message).show();
+    } else {
+      var $field = this.$('#' + attribute + '-field');
+
+      $field.addClass('error');
+      $field.find('.controls').append('<span class="help-inline">' + message + '</span>');
+    }
+  }
+});
+
+app.NewUserForm = app.CreateForm.extend({
+  template: _.template($('#new-user-form-template').html()),
+
+  modalSelector: '#new-user-form',
+
+  initializeModel: function() {
+    this.model = new app.User();
+  },
+
+  handleSuccess: function(model, resp) {
+    $('#new-user-form').modal('hide');
+    Backbone.trigger('alert', "Created account for '" + model.get('username') + "'");
+  },
 
 });
 
-app.LoginForm = Backbone.View.extend({
+app.LoginForm = app.CreateForm.extend({
   template: _.template($('#login-form-template').html()),
 
-  events: {
-    'submit form': 'login'
+  modalSelector: '#login-form',
+
+  initializeModel: function() {
+    this.model = new app.Session();
   },
 
-  login: function(event) {
-    event.preventDefault();
-
-    var session = new app.Session();
-    var formValues = this.$('form').serializeArray();
-
-    this.listenTo(session, 'sync', this.persistLogin);
-    this.listenTo(session, 'error', this.displayErrors);
-
-    _(formValues).each(function(pair) { session.set(pair.name, pair.value); });
-
-    session.save();
-  },
-
-  persistLogin: function(model, response) {
+  handleSuccess: function(model, response) {
     localStorage['userToken'] = response.token;
-    $('#login-form').modal('hide');
+    $(this.modalSelector).modal('hide');
 
     Backbone.trigger('alert', 'You have successfully logged-in')
     Backbone.trigger('login');
   },
 
-  displayErrors: function(model, xhr) {
-    _(xhr.responseJSON.errors).each(function(error) {
-      this.$('.errors').append('<li>' + error + '</li>');
-    });
-  },
-
-  close: function() {
-    this.stopListening();
-    this.trigger('close');
-    this.remove();
-  },
-
-  render: function() {
-    this.$el.html(this.template());
-    return this;
-  },
-
-  show: function(elem) {
-    elem.append(this.render().el);
-
-    $('#login-form').on('hidden', _.bind(this.close, this)).modal();
-  }
 });
