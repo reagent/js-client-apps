@@ -121,7 +121,7 @@ app.CurrentAccountView = Backbone.View.extend({
         $elem.data('editing', '0');
       });
 
-      $elem.html(input.render().el);
+      $elem.html(input.render().el).find('input').focus();
     }
   },
 
