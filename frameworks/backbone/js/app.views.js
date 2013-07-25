@@ -1,4 +1,5 @@
 // Views
+
 app.ApplicationView = Backbone.View.extend({
   el: 'body',
 
@@ -23,7 +24,8 @@ app.NavigationView = Backbone.View.extend({
   events: {
     'click #create-user': 'showUserForm',
     'click #log-in': 'showLoginForm',
-    'click #current-account-show': 'showCurrentAccount'
+    'click #current-account-show': 'showCurrentAccount',
+    'click #post-article': 'showArticleForm'
   },
 
   showUserForm: function(e) {
@@ -39,6 +41,11 @@ app.NavigationView = Backbone.View.extend({
   showCurrentAccount: function(e) {
     e.preventDefault();
     new app.CurrentAccountView().show(this.options.modalTarget);
+  },
+
+  showArticleForm: function(e) {
+    e.preventDefault();
+    new app.ArticleForm().show(this.options.modalTarget);
   },
 
   setLoginState: function() {
@@ -212,5 +219,22 @@ app.LoginForm = app.CreateForm.extend({
     Backbone.trigger('alert', 'You have successfully logged-in')
     Backbone.trigger('login');
   },
+
+});
+
+app.ArticleForm = app.CreateForm.extend({
+  template: _.template($('#article-form-template').html()),
+
+  modalSelector: '#article-form',
+
+  initializeModel: function() {
+    this.model = new app.Article();
+    this.model.token = localStorage['userToken'];
+  },
+
+  handleSuccess: function(model, response) {
+    $('#article-form').modal('hide');
+    Backbone.trigger('alert', "Created article '" + model.get('title') + "'");
+  }
 
 });

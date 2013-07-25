@@ -35,3 +35,16 @@ app.Account = app.Model.extend({
     return Backbone.Model.prototype.fetch.apply(this, [options]);
   }
 });
+
+app.Article = app.Model.extend({
+  url: '/articles',
+
+  save: function(attributes, options) {
+    options = options || {};
+    options.headers = options.headers || {}
+
+    options.headers['X-User-Token'] = this.token;
+
+    return Backbone.Model.prototype.save.apply(this, [attributes, options])
+  }
+});

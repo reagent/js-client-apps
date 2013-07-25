@@ -114,6 +114,37 @@
       </div>
     </script>
 
+    <script type="text/template" id="article-form-template">
+      <div id="article-form" class="modal hide fade" tabindex="-1">
+        <form class="form-horizontal modal-form">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+            <h3>Post an Article</h3>
+          </div>
+          <div class="modal-body">
+            <div id="errors-general" class="alert alert-error hide"></div>
+            <div id="title-field" class="control-group">
+              <label class="control-label" for="article-title">Title</label>
+              <div class="controls">
+                <input name="title" id="article-title" type="text" />
+              </div>
+            </div>
+            <div id="url-field" class="control-group">
+              <label class="control-label" for="article-url">URL</label>
+              <div class="controls">
+                <input name="url" id="article-url" type="text" />
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="reset" class="btn" data-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-primary">Create</button>
+          </div>
+        </form>
+      </div>
+    </script>
+
+
     <script type="text/template" id="current-account-show-template">
       <div id="current-account-show" class="modal hide fade" tabindex="-1">
         <div class="modal-header">
