@@ -1,3 +1,5 @@
+var app = app || {};
+
 // Models
 app.Model = Backbone.Model.extend({
   errors: {}
@@ -15,36 +17,31 @@ app.Account = app.Model.extend({
   url: '/account',
 
   token: null,
-
-  save: function(attributes, options) {
-    options = options || {};
-    options.headers = options.headers || {}
-
-    options.headers['X-User-Token'] = this.token;
-
-    return Backbone.Model.prototype.save.apply(this, [attributes, options])
-  },
-
-  fetch: function(options) {
-    options         = options || {};
-    options.headers = options.headers || {}
-
-    options.headers['Content-Type'] = 'application/json';
-    options.headers['X-User-Token'] = this.token;
-
-    return Backbone.Model.prototype.fetch.apply(this, [options]);
-  }
 });
 
 app.Article = app.Model.extend({
   url: '/articles',
-
-  save: function(attributes, options) {
-    options = options || {};
-    options.headers = options.headers || {}
-
-    options.headers['X-User-Token'] = this.token;
-
-    return Backbone.Model.prototype.save.apply(this, [attributes, options])
-  }
 });
+
+app.CurrentUser = function() {};
+
+app.CurrentUser.prototype = {
+
+  isLoggedIn: function() {
+    return localStorage.currentUserToken !== undefined;
+  },
+
+  token: function() {
+    return localStorage.currentUserToken;
+  },
+
+  logInWith: function(token, onSuccess) {
+    localStorage.currentUserToken = token;
+    this.trigger('login', "Logged in with token '" + token + "'");
+
+    if (onSuccess) { onSuccess(); }
+  }
+
+};
+
+_(app.CurrentUser.prototype).extend(Backbone.Events);

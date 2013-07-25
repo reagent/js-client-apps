@@ -1,3 +1,5 @@
+var app = app || {};
+
 // Views
 
 app.ApplicationView = Backbone.View.extend({
@@ -11,11 +13,11 @@ app.ApplicationView = Backbone.View.extend({
 
     new app.MainView({el: this.$('#main')});
 
-    if (localStorage['userToken']) {
+    if (app.currentUser.isLoggedIn()) {
       navigationView.setLoginState();
     }
 
-    this.listenTo(Backbone, 'login', navigationView.setLoginState);
+    this.listenTo(app.currentUser, 'login', navigationView.setLoginState);
   }
 
 });
@@ -213,11 +215,10 @@ app.LoginForm = app.CreateForm.extend({
   },
 
   handleSuccess: function(model, response) {
-    localStorage['userToken'] = response.token;
-    $(this.modalSelector).modal('hide');
-
-    Backbone.trigger('alert', 'You have successfully logged-in')
-    Backbone.trigger('login');
+    app.currentUser.logInWith(response.token, _.bind(function() {
+      $(this.modalSelector).modal('hide');
+      Backbone.trigger('alert', 'You have successfully logged-in');
+    }, this));
   },
 
 });

@@ -4,6 +4,9 @@ var app = app || {};
 app.keyCodes = {};
 app.keyCodes.Enter = 13;
 
+// Set current user
+app.currentUser = new app.CurrentUser;
+
 // Overall view structure
 //
 // ApplicationView
@@ -87,5 +90,11 @@ app.CreateForm = app.ModalView.extend({
       $field.addClass('error');
       $field.find('.controls').append('<span class="help-inline">' + message + '</span>');
     }
+  }
+});
+
+$.ajaxPrefilter(function (options, originalOptions, xhr) {
+  if (app.currentUser.isLoggedIn()) {
+    xhr.setRequestHeader('X-User-Token', app.currentUser.token());
   }
 });
