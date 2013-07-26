@@ -7,6 +7,9 @@ app.keyCodes.Enter = 13;
 // Set current user
 app.currentUser = new app.CurrentUser;
 
+// Provide a global reference to the Articles collection
+app.articles = new app.Articles;
+
 // Overall view structure
 //
 // ApplicationView

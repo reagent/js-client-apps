@@ -11,7 +11,7 @@ app.ApplicationView = Backbone.View.extend({
       modalTarget: $(document.body)
     });
 
-    new app.MainView({el: this.$('#main')});
+    new app.MainView({el: this.$('#main')}).render();
 
     if (app.currentUser.isLoggedIn()) {
       navigationView.setLoginState();
@@ -178,6 +178,32 @@ app.AlertView = Backbone.View.extend({
   }
 })
 
+app.ArticleView = Backbone.View.extend({
+  tagName: 'li',
+
+  template: _.template($('#article-template').html()),
+
+  render: function() {
+    this.$el.html(this.template(this.model.toJSON()));
+    return this;
+  }
+})
+
+app.ArticleListView = Backbone.View.extend({
+  tagName: 'ol',
+
+  initialize: function() {
+    this.listenTo(app.articles, 'add', this.addOne);
+    app.articles.fetch();
+  },
+
+  addOne: function(article) {
+    var view = new app.ArticleView({model: article});
+    this.$el.append(view.render().el);
+  },
+
+});
+
 app.MainView = Backbone.View.extend({
   initialize: function() {
     this.listenTo(Backbone, 'alert', this.showAlert);
@@ -186,6 +212,11 @@ app.MainView = Backbone.View.extend({
   showAlert: function(message) {
     var alertView = new app.AlertView({message: message});
     alertView.show(this.$el);
+  },
+
+  render: function() {
+    this.$el.append(new app.ArticleListView().el);
+    return this;
   }
 });
 
@@ -235,6 +266,7 @@ app.ArticleForm = app.CreateForm.extend({
 
   handleSuccess: function(model, response) {
     $('#article-form').modal('hide');
+    app.articles.add(model);
     Backbone.trigger('alert', "Created article '" + model.get('title') + "'");
   }
 
